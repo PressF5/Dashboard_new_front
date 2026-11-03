@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   Activity,
   BarChart3,
@@ -240,18 +241,23 @@ export default function DashboardPage() {
                 : "Показатели публикационной активности образовательных организаций"}
             </p>
           </div>
-          <div className="date-badge">
-            <span className="live-dot" />
-            <div>
-              <small>Последняя загрузка</small>
-              <strong>
-                {(tab === "school" ? date : publicationDate)
-                  ? new Date(
-                      (tab === "school" ? date : publicationDate) + "T12:00:00",
-                    ).toLocaleDateString("ru-RU")
-                  : "Нет данных"}
-              </strong>
+          <div className="heading-actions">
+            <div className="date-badge">
+              <span className="live-dot" />
+              <div>
+                <small>Последняя загрузка</small>
+                <strong>
+                  {(tab === "school" ? date : publicationDate)
+                    ? new Date(
+                        (tab === "school" ? date : publicationDate) +
+                          "T12:00:00",
+                      ).toLocaleDateString("ru-RU")
+                    : "Нет данных"}
+                </strong>
+              </div>
             </div>
+
+            <ThemeToggle />
           </div>
         </header>
         <section className="filters">
