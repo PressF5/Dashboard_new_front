@@ -1,5 +1,20 @@
 "use client";
+
 import { useEffect, useMemo, useState } from "react";
+
+import {
+  useDashboardDates,
+  useMsuOptions,
+  useOrganizationOptions,
+  usePublicationDates,
+} from "@/lib/queries/dictionary-queries";
+
+import { useDashboardStatistics } from "@/lib/queries/dashboard-queries";
+import { usePublicationStatistics } from "@/lib/queries/publication-queries";
+
+import type { Metric } from "@/types/dashboard";
+import type { PublicationRow } from "@/types/publication";
+
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   Activity,
@@ -14,17 +29,7 @@ import {
 } from "lucide-react";
 
 type Option = { id: number; name: string; msuId?: number };
-type Metric = {
-  key: string;
-  label: string;
-  order: number;
-  categoryKey: string;
-  categoryLabel: string;
-  unit?: string | null;
-  percentage: boolean;
-  value: number | string | boolean | null;
-  hasData: boolean;
-};
+
 type Stats = {
   date: string;
   scope: string;
@@ -32,19 +37,7 @@ type Stats = {
   metrics: Metric[];
   message?: string;
 };
-type PublicationRow = {
-  date: string;
-  msuId: number;
-  name: string;
-  sourceCode?: string;
-  socialPublications: number | null;
-  websitePublications: number | null;
-  parentChatPublications: number | null;
-  thematicVideos: number | null;
-  publicationReach: number | null;
-  organizationsPercent: number | null;
-};
-const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8081";
+
 function showValue(m: Metric) {
   if (!m.hasData || m.value === null || m.value === undefined || m.value === "")
     return "Нет данных";
@@ -89,140 +82,128 @@ function PercentageRing({ value }: { value: number }) {
   );
 }
 export default function DashboardPage() {
-  const [tab, setTab] = useState<"school" | "publications">("school"),
-    [publicationDates, setPublicationDates] = useState<string[]>([]),
-    [publicationRows, setPublicationRows] = useState<PublicationRow[]>([]),
-    [publicationDate, setPublicationDate] = useState(""),
-    [publicationMsuId, setPublicationMsuId] = useState("");
-  const [dates, setDates] = useState<string[]>([]),
-    [msu, setMsu] = useState<Option[]>([]),
-    [orgs, setOrgs] = useState<Option[]>([]),
-    [date, setDate] = useState(""),
-    [msuId, setMsuId] = useState(""),
-    [orgId, setOrgId] = useState(""),
-    [stats, setStats] = useState<Stats | null>(null),
-    [opened, setOpened] = useState<string[]>([]),
-    [loading, setLoading] = useState(true),
-    [error, setError] = useState("");
+  const [tab, setTab] = useState<"school" | "publications">("school");
+
+  const [date, setDate] = useState("");
+  const [msuId, setMsuId] = useState("");
+  const [orgId, setOrgId] = useState("");
+
+  const [publicationDate, setPublicationDate] = useState("");
+  const [publicationMsuId, setPublicationMsuId] = useState("");
+
+  const [opened, setOpened] = useState<string[]>([]);
+
+  // Справочники основной статистики.
+  const {
+    data: datesData = [],
+    isPending: datesLoading,
+    isError: datesError,
+  } = useDashboardDates();
+
+  const {
+    data: msu = [],
+    isPending: msuLoading,
+    isError: msuError,
+  } = useMsuOptions();
+
+  const {
+    data: orgs = [],
+    isPending: orgsLoading,
+    isError: orgsError,
+  } = useOrganizationOptions(msuId ? Number(msuId) : null);
+
+  // Справочники публикаций.
+  const {
+    data: publicationDatesData = [],
+    isPending: publicationDatesLoading,
+    isError: publicationDatesError,
+  } = usePublicationDates();
+
+  // Инициализация выбранных дат после получения справочников.
+  const dates = useMemo(() => datesData.map((item) => item.date), [datesData]);
+
+  const publicationDates = useMemo(
+    () => publicationDatesData.map((item) => item.date),
+    [publicationDatesData],
+  );
+
   useEffect(() => {
-    fetch(API + "/api/publications/dates")
-      .then((r) => r.json())
-      .then((ds: { date: string }[]) => {
-        const values = ds.map((x) => x.date);
-        setPublicationDates(values);
-        setPublicationDate(values[0] || "");
-      })
-      .catch(() => setPublicationDates([]));
-  }, []);
-  useEffect(() => {
-    if (tab !== "publications" || !publicationDate) {
-      setPublicationRows([]);
-      return;
+    if (dates.length > 0 && !dates.includes(date)) {
+      setDate(dates[0]);
     }
+  }, [dates, date]);
 
-    const controller = new AbortController();
+  useEffect(() => {
+    if (
+      publicationDates.length > 0 &&
+      !publicationDates.includes(publicationDate)
+    ) {
+      setPublicationDate(publicationDates[0]);
+    }
+  }, [publicationDates, publicationDate]);
 
-    const fetchPublications = async () => {
-      try {
-        const params = new URLSearchParams({
+  // Основная статистика.
+  const {
+    data: stats = null,
+    isPending: statsLoading,
+    isError: statsError,
+    error: statsErrorData,
+  } = useDashboardStatistics(
+    date && msuId
+      ? {
+          date,
+          msuId: Number(msuId),
+          organizationId: orgId ? Number(orgId) : null,
+        }
+      : null,
+  );
+
+  // Статистика публикаций.
+  const {
+    data: publicationData,
+    isPending: publicationsLoading,
+    isError: publicationsError,
+  } = usePublicationStatistics(
+    tab === "publications" && publicationDate
+      ? {
           date: publicationDate,
-        });
-
-        if (publicationMsuId) {
-          params.set("msuId", publicationMsuId);
+          msuId: publicationMsuId ? Number(publicationMsuId) : null,
         }
+      : null,
+  );
 
-        const response = await fetch(
-          `${API}/api/publications/statistics?${params.toString()}`,
-          {
-            signal: controller.signal,
-          },
-        );
+  const publicationRows: PublicationRow[] = publicationData?.metrics ?? [];
 
-        if (!response.ok) {
-          throw new Error(
-            `Ошибка загрузки статистики публикаций: ${response.status}`,
-          );
-        }
+  const loading =
+    datesLoading || msuLoading || (!!date && !!msuId && statsLoading);
 
-        const data: { metrics: PublicationRow[] } = await response.json();
+  const error =
+    datesError || msuError
+      ? "Не удалось загрузить справочники. Проверьте, что backend запущен."
+      : statsError
+        ? statsErrorData instanceof Error
+          ? statsErrorData.message
+          : "Не удалось загрузить показатели."
+        : "";
 
-        setPublicationRows(data.metrics ?? []);
-      } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") {
-          return;
-        }
-
-        console.error(error);
-        setPublicationRows([]);
-      }
-    };
-
-    fetchPublications();
-
-    return () => {
-      controller.abort();
-    };
-  }, [tab, publicationDate, publicationMsuId]);
-  useEffect(() => {
-    Promise.all([
-      fetch(API + "/api/dashboard/dates").then((r) => r.json()),
-      fetch(API + "/api/dashboard/msu").then((r) => r.json()),
-    ])
-      .then(([ds, ms]) => {
-        const values = (ds as { date: string }[]).map((x) => x.date);
-        setDates(values);
-        setDate(values[0] || "");
-        setMsu(ms);
-        if (!ms.length)
-          setError(
-            "Статистика ещё не загружена. Администратор может загрузить Excel в панели управления.",
-          );
-      })
-      .catch(() =>
-        setError(
-          "Не удалось подключиться к API. Проверьте, что backend запущен.",
-        ),
-      )
-      .finally(() => setLoading(false));
-  }, []);
-  useEffect(() => {
-    if (!msuId) {
-      setOrgs([]);
-      setOrgId("");
-      return;
-    }
-
-    fetch(API + "/api/dashboard/organizations?msuId=" + msuId)
-      .then((r) => r.json())
-      .then((rows: Option[]) => {
-        setOrgs(rows);
-        setOrgId((current) =>
-          rows.some((x) => String(x.id) === current) ? current : "",
-        );
-      })
-      .catch(() => setOrgs([]));
-  }, [msuId]);
-  useEffect(() => {
-    if (!date || !msuId) {
-      setStats(null);
-      return;
-    }
-    const q = new URLSearchParams({ date: date, msuId: msuId });
-    if (orgId) q.set("organizationId", orgId);
-    fetch(API + "/api/dashboard/statistics?" + q.toString())
-      .then((r) => r.json())
-      .then(setStats)
-      .catch(() => setError("Не удалось загрузить показатели."));
-  }, [date, msuId, orgId]);
   const categories = useMemo(() => {
     const map = new Map<string, { label: string; metrics: Metric[] }>();
+
     (stats?.metrics || []).forEach((m) => {
-      if (!map.has(m.categoryKey))
-        map.set(m.categoryKey, { label: m.categoryLabel, metrics: [] });
+      if (!map.has(m.categoryKey)) {
+        map.set(m.categoryKey, {
+          label: m.categoryLabel,
+          metrics: [],
+        });
+      }
+
       map.get(m.categoryKey)!.metrics.push(m);
     });
-    return Array.from(map.entries()).map(([key, v]) => ({ key, ...v }));
+
+    return Array.from(map.entries()).map(([key, value]) => ({
+      key,
+      ...value,
+    }));
   }, [stats]);
 
   return (
@@ -339,7 +320,7 @@ export default function DashboardPage() {
               <select
                 value={orgId}
                 onChange={(e) => setOrgId(e.target.value)}
-                disabled={!msuId}
+                disabled={!msuId || orgsLoading}
               >
                 <option value="">Общая статистика МСУ</option>
                 {orgs.map((x) => (
