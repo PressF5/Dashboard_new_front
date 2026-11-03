@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FileSpreadsheet, LockKeyhole, LogIn } from "lucide-react";
 
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAdminAuth } from "@/components/admin/admin-auth-provider";
 
 export default function AdminPage() {
@@ -40,14 +41,19 @@ export default function AdminPage() {
         </a>
 
         <header className="admin-heading">
-          <div className="admin-icon">
-            <LockKeyhole size={25} />
+          <div className="admin-heading-info">
+            <div className="admin-icon">
+              <LockKeyhole size={25} />
+            </div>
+
+            <div>
+              <p className="eyebrow">АДМИНИСТРАТИВНАЯ ПАНЕЛЬ</p>
+              <h1>Управление дашбордом</h1>
+              <p className="subtitle">Управление статистикой и загрузками</p>
+            </div>
           </div>
-          <div>
-            <p className="eyebrow">АДМИНИСТРАТИВНАЯ ПАНЕЛЬ</p>
-            <h1>Управление дашбордом</h1>
-            <p className="subtitle">Управление статистикой и загрузками</p>
-          </div>
+
+          <ThemeToggle />
         </header>
 
         <section className="upload-card">

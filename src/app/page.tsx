@@ -15,6 +15,7 @@ import { usePublicationStatistics } from "@/lib/queries/publication-queries";
 import type { Metric } from "@/types/dashboard";
 import type { PublicationRow } from "@/types/publication";
 
+import { useAdminAuth } from "@/components/admin/admin-auth-provider";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   Activity,
@@ -92,6 +93,8 @@ export default function DashboardPage() {
   const [publicationMsuId, setPublicationMsuId] = useState("");
 
   const [opened, setOpened] = useState<string[]>([]);
+
+  const { authorized } = useAdminAuth();
 
   // Справочники основной статистики.
   const {
@@ -244,6 +247,12 @@ export default function DashboardPage() {
             <p>Данные обновляются после загрузки очередного отчёта.</p>
           </div>
         </div>
+        {authorized && (
+          <a className="admin-link" href="/admin">
+            <span>Панель администратора</span>
+            <ChevronRight size={16} />
+          </a>
+        )}
       </aside>
       <main className="main">
         <header className="page-heading">
