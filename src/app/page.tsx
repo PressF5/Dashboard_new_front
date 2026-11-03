@@ -71,8 +71,8 @@ function PercentageRing({ value }: { value: number }) {
         style={{
           background: `conic-gradient(
             ${ringColor} ${percent}%,
-            #e7ebef ${percent}% 100%
-          )`,
+            var(--progress-track) ${percent}% 100%
+            )`,
         }}
       >
         <div className="percentage-ring-inner">
@@ -210,10 +210,7 @@ export default function DashboardPage() {
         </button>
         <button
           className={"nav-item " + (tab === "publications" ? "active" : "")}
-          style={{
-            marginTop: 8,
-            background: tab === "publications" ? "#eaf2f7" : "transparent",
-          }}
+          style={{ marginTop: 8 }}
           onClick={() => setTab("publications")}
         >
           <Activity size={18} />
