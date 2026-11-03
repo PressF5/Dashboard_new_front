@@ -215,7 +215,7 @@ a {
   gap: 10px;
   padding: 12px 16px;
   border: 1px solid var(--border);
-  background: white;
+  background: var(--card);
   border-radius: 12px;
 }
 .date-badge small,
@@ -272,7 +272,7 @@ a {
 .notice {
   padding: 34px 24px;
   text-align: center;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 15px;
   color: var(--muted-foreground);
@@ -306,7 +306,6 @@ a {
 .date-badge,
 .filters,
 .empty-state,
-.notice,
 .summary-card,
 .chart-panel,
 .metrics-section,
