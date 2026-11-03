@@ -632,3 +632,32 @@ th {
     max-width: 100%;
   }
 }
+
+.percentage-ring-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px 0 4px;
+}
+
+.percentage-ring {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.percentage-ring-inner {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+
+.percentage-ring-inner strong {
+  font-size: 15px;
+  color: #1d3557;
+}

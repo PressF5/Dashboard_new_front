@@ -11,15 +11,7 @@ import {
   School,
   Users,
 } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+
 type Option = { id: number; name: string; msuId?: number };
 type Metric = {
   key: string;
@@ -62,15 +54,37 @@ function showValue(m: Metric) {
     );
   return String(m.value);
 }
-function color(value: unknown) {
-  if (typeof value !== "number") return "#aab4c2";
-  const p = Math.max(0, Math.min(100, value));
-  const a = [220, 72, 72],
-    b = [42, 157, 105];
+function color(value: number) {
+  if (value < 50) return "#dc4848";
+  if (value < 80) return "#e69a36";
+  if (value < 100) return "#a3a832";
+  return "#2a9d69";
+}
+function PercentageRing({ value }: { value: number }) {
+  const percent = Math.max(0, Math.min(100, value));
+  const ringColor = color(value);
+
   return (
-    "rgb(" +
-    a.map((v, i) => Math.round(v + ((b[i] - v) * p) / 100)).join(",") +
-    ")"
+    <div className="percentage-ring-wrap">
+      <div
+        className="percentage-ring"
+        style={{
+          background: `conic-gradient(
+            ${ringColor} ${percent}%,
+            #e7ebef ${percent}% 100%
+          )`,
+        }}
+      >
+        <div className="percentage-ring-inner">
+          <strong>
+            {value.toLocaleString("ru-RU", {
+              maximumFractionDigits: 1,
+            })}
+            %
+          </strong>
+        </div>
+      </div>
+    </div>
   );
 }
 export default function DashboardPage() {
@@ -173,9 +187,7 @@ export default function DashboardPage() {
     });
     return Array.from(map.entries()).map(([key, v]) => ({ key, ...v }));
   }, [stats]);
-  const chart = (stats?.metrics || [])
-    .filter((m) => m.hasData && typeof m.value === "number")
-    .slice(0, 8);
+
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -501,44 +513,6 @@ export default function DashboardPage() {
                 <small>Из {stats.metrics.length} показателей</small>
               </div>
             </section>
-            <section className="chart-panel">
-              <div className="section-title">
-                <div>
-                  <h2>Обзор показателей</h2>
-                  <p>Числовые значения по выбранному уровню</p>
-                </div>
-              </div>
-              <div className="chart-wrap">
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart
-                    data={chart}
-                    margin={{ top: 10, right: 12, left: 0, bottom: 50 }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={false}
-                      stroke="#e7edf3"
-                    />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fontSize: 11, fill: "#65758b" }}
-                      interval={0}
-                      angle={-25}
-                      textAnchor="end"
-                      height={72}
-                    />
-                    <YAxis tick={{ fontSize: 11, fill: "#65758b" }} />
-                    <Tooltip
-                      formatter={(value) => [
-                        Number(value).toLocaleString("ru-RU"),
-                        "Значение",
-                      ]}
-                    />
-                    <Bar dataKey="value" fill="#457b9d" radius={[5, 5, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
             <section className="metrics-section">
               <div className="section-title">
                 <div>
@@ -599,17 +573,9 @@ export default function DashboardPage() {
                             >
                               {showValue(m)}
                             </strong>
-                            {pct !== null && (
-                              <div className="progress-track">
-                                <div
-                                  className="progress-fill"
-                                  style={{
-                                    width: pct + "%",
-                                    backgroundColor: color(pct),
-                                  }}
-                                />
-                              </div>
-                            )}
+                            {m.percentage &&
+                              typeof m.value === "number" &&
+                              m.hasData && <PercentageRing value={m.value} />}
                           </article>
                         );
                       })}
