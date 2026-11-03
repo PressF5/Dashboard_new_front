@@ -175,7 +175,10 @@ export default function DashboardPage() {
   const publicationRows: PublicationRow[] = publicationData?.metrics ?? [];
 
   const loading =
-    datesLoading || msuLoading || (!!date && !!msuId && statsLoading);
+    datesLoading ||
+    msuLoading ||
+    (!!msuId && orgsLoading) ||
+    (!!date && !!msuId && statsLoading);
 
   const error =
     datesError || msuError
@@ -332,9 +335,20 @@ export default function DashboardPage() {
             </label>
           )}
         </section>
+        {tab === "school" && orgsError && (
+          <div className="notice">
+            Не удалось загрузить список образовательных организаций.
+          </div>
+        )}
         {tab === "publications" && (
           <>
-            {publicationDates.length === 0 ? (
+            {publicationDatesLoading || publicationsLoading ? (
+              <div className="empty-state">Загрузка статистики публикаций…</div>
+            ) : publicationsError || publicationDatesError ? (
+              <div className="notice">
+                Не удалось загрузить статистику публикаций.
+              </div>
+            ) : publicationDates.length === 0 ? (
               <div className="empty-state">
                 <BookOpenCheck size={34} />
                 <h2>Нет загруженной статистики публикаций</h2>
