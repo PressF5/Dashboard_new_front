@@ -244,9 +244,6 @@ export default function DashboardPage() {
             <p>Данные обновляются после загрузки очередного отчёта.</p>
           </div>
         </div>
-        <a className="admin-link" href="/admin/imports">
-          Панель администратора <ChevronRight size={16} />
-        </a>
       </aside>
       <main className="main">
         <header className="page-heading">
