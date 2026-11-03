@@ -119,14 +119,50 @@ export default function DashboardPage() {
       setPublicationRows([]);
       return;
     }
-    const q = new URLSearchParams({ date: publicationDate });
-    if (publicationMsuId) q.set("msuId", publicationMsuId);
-    fetch(API + "/api/publications/statistics?" + q.toString())
-      .then((r) => r.json())
-      .then((data: { metrics: PublicationRow[] }) =>
-        setPublicationRows(data.metrics || []),
-      )
-      .catch(() => setPublicationRows([]));
+
+    const controller = new AbortController();
+
+    const fetchPublications = async () => {
+      try {
+        const params = new URLSearchParams({
+          date: publicationDate,
+        });
+
+        if (publicationMsuId) {
+          params.set("msuId", publicationMsuId);
+        }
+
+        const response = await fetch(
+          `${API}/api/publications/statistics?${params.toString()}`,
+          {
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Ошибка загрузки статистики публикаций: ${response.status}`,
+          );
+        }
+
+        const data: { metrics: PublicationRow[] } = await response.json();
+
+        setPublicationRows(data.metrics ?? []);
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+
+        console.error(error);
+        setPublicationRows([]);
+      }
+    };
+
+    fetchPublications();
+
+    return () => {
+      controller.abort();
+    };
   }, [tab, publicationDate, publicationMsuId]);
   useEffect(() => {
     Promise.all([
