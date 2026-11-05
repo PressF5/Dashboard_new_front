@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 type StatisticsDatePickerProps = {
   label: string;
@@ -38,9 +43,12 @@ export function StatisticsDatePicker({
       : new Date();
 
   const [opened, setOpened] = useState(false);
+
   const [visibleMonth, setVisibleMonth] = useState(
     new Date(initialDate.getFullYear(), initialDate.getMonth(), 1),
   );
+
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const availableDateSet = useMemo(
     () => new Set(availableDates),
@@ -54,6 +62,34 @@ export function StatisticsDatePicker({
 
     setVisibleMonth(new Date(date.getFullYear(), date.getMonth(), 1));
   }, [selectedDate]);
+
+  // Закрытие календаря при клике вне компонента или нажатии Escape.
+  useEffect(() => {
+    if (!opened) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpened(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpened(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [opened]);
 
   const year = visibleMonth.getFullYear();
   const month = visibleMonth.getMonth();
@@ -76,8 +112,8 @@ export function StatisticsDatePicker({
     ? parseDate(selectedDate).toLocaleDateString("ru-RU")
     : "Нет доступных дат";
 
-  function changeMonth(offset: number) {
-    setVisibleMonth(new Date(year, month + offset, 1));
+  function changeMonth(monthOffset: number) {
+    setVisibleMonth(new Date(year, month + monthOffset, 1));
   }
 
   function selectDate(day: number) {
@@ -90,22 +126,28 @@ export function StatisticsDatePicker({
   }
 
   return (
-    <div className="statistics-date-picker">
+    <div className="statistics-date-picker" ref={containerRef}>
       <span className="statistics-date-label">{label}</span>
 
       <button
         type="button"
         className="statistics-date-trigger"
         onClick={() => setOpened((value) => !value)}
+        disabled={availableDates.length === 0}
         aria-expanded={opened}
+        aria-haspopup="dialog"
       >
         <CalendarDays size={18} />
         <span>{selectedLabel}</span>
-        <ChevronDownIcon />
+        <ChevronDown className="statistics-date-chevron" size={17} />
       </button>
 
       {opened && (
-        <div className="statistics-calendar">
+        <div
+          className="statistics-calendar"
+          role="dialog"
+          aria-label="Выбор даты статистики"
+        >
           <div className="statistics-calendar-header">
             <button
               type="button"
@@ -175,8 +217,4 @@ export function StatisticsDatePicker({
       )}
     </div>
   );
-}
-
-function ChevronDownIcon() {
-  return <ChevronRight className="statistics-date-chevron" size={17} />;
 }

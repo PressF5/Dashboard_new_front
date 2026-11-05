@@ -939,8 +939,18 @@ th {
   border-color: var(--ring);
 }
 
+.statistics-date-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  border-color: var(--border);
+}
+
+.statistics-date-trigger:disabled:hover {
+  border-color: var(--border);
+}
+
 .statistics-date-chevron {
-  transform: rotate(90deg);
+  transform: rotate(0deg);
   color: var(--muted-foreground);
 }
 
