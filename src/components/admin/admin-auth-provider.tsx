@@ -15,7 +15,6 @@ import { apiFetch } from "@/lib/api/client";
 type AdminUser = {
   id: number;
   username: string;
-  email: string;
   roleCode: string;
   roleName: string;
 };
@@ -66,7 +65,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         setUser({
           id: response.id,
           username: response.username,
-          email: response.email,
           roleCode: response.roleCode,
           roleName: response.roleName,
         });
@@ -112,7 +110,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     setUser({
       id: response.id,
       username: response.username,
-      email: response.email,
       roleCode: response.roleCode,
       roleName: response.roleName,
     });
