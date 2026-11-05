@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import type { ComponentProps } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FileSpreadsheet, LockKeyhole, LogIn } from "lucide-react";
 
@@ -9,14 +11,14 @@ import { useAdminAuth } from "@/components/admin/admin-auth-provider";
 
 export default function AdminPage() {
   const router = useRouter();
-  const { authorized, login, logout } = useAdminAuth();
+  const { authorized, login, logout, user } = useAdminAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function handleLogin(e: FormEvent) {
+  async function handleLogin(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setBusy(true);
@@ -35,10 +37,10 @@ export default function AdminPage() {
   if (authorized) {
     return (
       <main className="admin-shell">
-        <a className="back-link" href="/">
+        <Link className="back-link" href="/">
           <ArrowLeft size={17} />
           Вернуться к дашборду
-        </a>
+        </Link>
 
         <header className="admin-heading">
           <div className="admin-heading-info">
@@ -56,22 +58,60 @@ export default function AdminPage() {
           <ThemeToggle />
         </header>
 
-        <section className="upload-card">
-          <div className="upload-intro">
-            <FileSpreadsheet size={24} />
-            <div>
-              <h2>Импорт статистики</h2>
-              <p>Загрузка основной статистики и статистики публикаций.</p>
+        {user?.roleCode === "STATISTICS_ADMIN" && (
+          <section className="upload-card">
+            <div className="upload-intro">
+              <FileSpreadsheet size={24} />
+              <div>
+                <h2>Импорт основной статистики</h2>
+                <p>Загрузка и обновление показателей дашборда.</p>
+              </div>
             </div>
-          </div>
 
-          <button
-            className="primary-button"
-            onClick={() => router.push("/admin/imports")}
-          >
-            Перейти к импорту
-          </button>
-        </section>
+            <button
+              className="primary-button"
+              onClick={() => router.push("/admin/imports")}
+            >
+              Перейти к импорту
+            </button>
+          </section>
+        )}
+
+        {user?.roleCode === "PUBLICATIONS_ADMIN" && (
+          <section className="upload-card">
+            <div className="upload-intro">
+              <FileSpreadsheet size={24} />
+              <div>
+                <h2>Импорт статистики публикаций</h2>
+                <p>Загрузка и обновление статистики публикаций.</p>
+              </div>
+            </div>
+
+            <button
+              className="primary-button"
+              onClick={() => router.push("/admin/imports")}
+            >
+              Перейти к импорту
+            </button>
+          </section>
+        )}
+
+        {user?.roleCode === "TILDA_ADMIN" && (
+          <section className="upload-card">
+            <h2>Статистика Tilda</h2>
+            <p>Раздел управления статистикой сайта находится в разработке.</p>
+          </section>
+        )}
+
+        {user?.roleCode === "DISTANCE_ADMIN" && (
+          <section className="upload-card">
+            <h2>Статистика дистанционного обучения</h2>
+            <p>
+              Раздел управления статистикой дистанционного обучения находится в
+              разработке.
+            </p>
+          </section>
+        )}
 
         <button
           className="back-link"
@@ -88,10 +128,14 @@ export default function AdminPage() {
 
   return (
     <main className="admin-shell">
-      <a className="back-link" href="/">
-        <ArrowLeft size={17} />
-        Вернуться к дашборду
-      </a>
+      <div className="admin-heading">
+        <Link className="back-link" href="/">
+          <ArrowLeft size={17} />
+          Вернуться к дашборду
+        </Link>
+
+        <ThemeToggle />
+      </div>
 
       <form className="login-card" onSubmit={handleLogin}>
         <LockKeyhole size={24} />
@@ -127,6 +171,11 @@ export default function AdminPage() {
         </button>
 
         {message && <p className="form-message">{message}</p>}
+
+        <p className="register-login-link">
+          Нет учётной записи?{" "}
+          <Link href="/admin/register">Зарегистрироваться</Link>
+        </p>
       </form>
     </main>
   );
