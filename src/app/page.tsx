@@ -17,6 +17,7 @@ import type { PublicationRow } from "@/types/publication";
 
 import { useAdminAuth } from "@/components/admin/admin-auth-provider";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { StatisticsDatePicker } from "@/components/dashboard/statistics-date-picker";
 import {
   Activity,
   BarChart3,
@@ -287,24 +288,13 @@ export default function DashboardPage() {
           </div>
         </header>
         <section className="filters">
-          <label>
-            <span>Дата загрузки</span>
-            <select
-              value={tab === "school" ? date : publicationDate}
-              onChange={(e) =>
-                tab === "school"
-                  ? setDate(e.target.value)
-                  : setPublicationDate(e.target.value)
-              }
-            >
-              <option value="">Нет доступных дат</option>
-              {(tab === "school" ? dates : publicationDates).map((d) => (
-                <option key={d} value={d}>
-                  {new Date(d + "T12:00:00").toLocaleDateString("ru-RU")}
-                </option>
-              ))}
-            </select>
-          </label>
+          <StatisticsDatePicker
+            label="Дата статистики"
+            selectedDate={tab === "school" ? date : publicationDate}
+            availableDates={tab === "school" ? dates : publicationDates}
+            onChange={tab === "school" ? setDate : setPublicationDate}
+          />
+
           <label>
             <span>Муниципальное образование (МСУ)</span>
             <select
@@ -323,6 +313,7 @@ export default function DashboardPage() {
               ))}
             </select>
           </label>
+
           {tab === "school" && (
             <label>
               <span>Образовательная организация (ОО)</span>
