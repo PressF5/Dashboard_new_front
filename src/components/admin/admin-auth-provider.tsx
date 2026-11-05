@@ -10,42 +10,65 @@ import {
 
 import { apiFetch } from "@/lib/api/client";
 
+type AdminLoginResponse = {
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
+  id: number;
+  username: string;
+  email: string;
+  roleCode: string;
+  roleName: string;
+};
+
 type AdminAuthContextType = {
   authorization: string | null;
   authorized: boolean;
+  user: AdminLoginResponse | null;
   login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const [authorization, setAuthorization] = useState<string | null>(null);
+  const [user, setUser] = useState<AdminLoginResponse | null>(null);
 
   const login = useCallback(async (username: string, password: string) => {
-    const token = `Basic ${btoa(`${username}:${password}`)}`;
-
-    await apiFetch("/api/admin/imports", {
+    const response = await apiFetch<AdminLoginResponse>("/api/auth/login", {
+      method: "POST",
       headers: {
-        Authorization: token,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        username,
+        password,
+      }),
     });
 
-    setAuthorization(token);
+    setUser(response);
   }, []);
 
-  const logout = useCallback(() => {
-    setAuthorization(null);
+  const logout = useCallback(async () => {
+    try {
+      await apiFetch<void>("/api/auth/logout", {
+        method: "POST",
+      });
+    } finally {
+      // Локально завершаем сессию даже при ошибке сети.
+      setUser(null);
+    }
   }, []);
 
   const value = useMemo(
     () => ({
-      authorization,
-      authorized: authorization !== null,
+      authorization: user ? `${user.tokenType} ${user.accessToken}` : null,
+      authorized: user !== null,
+      user,
       login,
       logout,
     }),
-    [authorization, login, logout],
+    [user, login, logout],
   );
 
   return (
